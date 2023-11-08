@@ -3,11 +3,15 @@ pragma solidity ^0.8.20;
 
 import "../lib/AlignmentVault/src/AlignmentVaultFactory.sol";
 
+interface IMiyaAV {
+    function vaultId() external view returns (uint256);
+}
+
 contract MiyaAVFactory is AlignmentVaultFactory {
     event Deployed(address indexed vault, address indexed erc721, uint256 indexed vaultId, bytes32 salt);
 
     // ERC721 address => MiyaAV address
-    mapping(address => address) public vaults;
+    mapping(address => mapping(uint256 => address)) public vaults;
 
     constructor(address _owner, address _implementation) AlignmentVaultFactory(_owner, _implementation) { }
 
@@ -19,9 +23,10 @@ contract MiyaAVFactory is AlignmentVaultFactory {
      */
     function deploy(address _erc721, uint256 _vaultId) external override returns (address deployment) {
         deployment = LibClone.clone(implementation);
-        vaults[_erc721] = deployment;
-        IInitialize(deployment).initialize(_erc721, owner(), _vaultId);
-        IInitialize(deployment).disableInitializers();
+        IAVInitialize(deployment).initialize(_erc721, owner(), _vaultId);
+        IAVInitialize(deployment).disableInitializers();
+        if (_vaultId == 0) _vaultId = IMiyaAV(deployment).vaultId();
+        vaults[_erc721][_vaultId] = deployment;
         emit Deployed(deployment, _erc721, _vaultId, 0);
     }
 
@@ -38,9 +43,10 @@ contract MiyaAVFactory is AlignmentVaultFactory {
         bytes32 _salt
     ) external override returns (address deployment) {
         deployment = LibClone.cloneDeterministic(implementation, _salt);
-        vaults[_erc721] = deployment;
-        IInitialize(deployment).initialize(_erc721, owner(), _vaultId);
-        IInitialize(deployment).disableInitializers();
+        IAVInitialize(deployment).initialize(_erc721, owner(), _vaultId);
+        IAVInitialize(deployment).disableInitializers();
+        if (_vaultId == 0) _vaultId = IMiyaAV(deployment).vaultId();
+        vaults[_erc721][_vaultId] = deployment;
         emit Deployed(deployment, _erc721, _vaultId, _salt);
     }
 }
