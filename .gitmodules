@@ -1,3 +1,9 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/ERC721M"]
+	path = lib/ERC721M
+	url = https://github.com/Zodomo/ERC721M
+[submodule "lib/AlignmentVault"]
+	path = lib/AlignmentVault
+	url = https://github.com/Zodomo/AlignmentVault
