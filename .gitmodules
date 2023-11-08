@@ -7,6 +7,3 @@
 [submodule "lib/ERC721M"]
 	path = lib/ERC721M
 	url = https://github.com/Zodomo/ERC721M
-[submodule "lib/solady"]
-	path = lib/solady
-	url = https://github.com/vectorized/solady
