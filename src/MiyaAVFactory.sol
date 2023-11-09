@@ -2,16 +2,19 @@
 pragma solidity ^0.8.20;
 
 import "../lib/AlignmentVault/src/AlignmentVaultFactory.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 interface IMiyaAV {
     function vaultId() external view returns (uint256);
 }
 
 contract MiyaAVFactory is AlignmentVaultFactory {
+    using EnumerableSet for EnumerableSet.UintSet;
     event Deployed(address indexed vault, address indexed erc721, uint256 indexed vaultId, bytes32 salt);
 
     // ERC721 address => NFTX VaultID => MiyaAV address
     mapping(address => mapping(uint256 => address)) public vaults;
+    mapping(address => EnumerableSet.UintSet) internal _vaultIds;
     mapping(address => address) public defaultVault;
 
     constructor(address _owner, address _implementation) AlignmentVaultFactory(_owner, _implementation) { }
@@ -29,6 +32,7 @@ contract MiyaAVFactory is AlignmentVaultFactory {
         if (_vaultId == 0) _vaultId = IMiyaAV(deployment).vaultId();
         vaults[_erc721][_vaultId] = deployment;
         if (defaultVault[_erc721] == address(0)) defaultVault[_erc721] = deployment;
+        if (!_vaultIds[_erc721].contains(_vaultId)) _vaultIds[_erc721].add(_vaultId);
         emit Deployed(deployment, _erc721, _vaultId, 0);
     }
 
@@ -50,6 +54,11 @@ contract MiyaAVFactory is AlignmentVaultFactory {
         if (_vaultId == 0) _vaultId = IMiyaAV(deployment).vaultId();
         vaults[_erc721][_vaultId] = deployment;
         if (defaultVault[_erc721] == address(0)) defaultVault[_erc721] = deployment;
+        if (!_vaultIds[_erc721].contains(_vaultId)) _vaultIds[_erc721].add(_vaultId);
         emit Deployed(deployment, _erc721, _vaultId, _salt);
+    }
+
+    function getVaultIds(address _erc721) external view returns (uint256[] memory) {
+        return _vaultIds[_erc721].values();
     }
 }

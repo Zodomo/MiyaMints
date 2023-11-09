@@ -7,3 +7,6 @@
 [submodule "lib/ERC721M"]
 	path = lib/ERC721M
 	url = https://github.com/Zodomo/ERC721M
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
