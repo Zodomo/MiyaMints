@@ -142,5 +142,97 @@ contract MiyaMints is Ownable {
         emit OwnershipChanged(msg.sender, _oldOwner, _newOwner);
     }
 
-    // TODO: Vault asset management controls
+    // Align the NFTs in the default (initial) vault for a given collection
+    function alignNfts(address _erc721, uint256[] memory _tokenIds) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        vault.alignNfts{ value: msg.value }(_tokenIds);
+    }
+    // Align the NFTs in a specific vault for a given collection
+    function alignNfts(
+        address _erc721,
+        uint256 _vaultId,
+        uint256[] memory _tokenIds
+    ) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        vault.alignNfts{ value: msg.value }(_tokenIds);
+    }
+
+    // Align the tokens in the default (initial) vault for a given collection
+    function alignTokens(address _erc721, uint256 _amount) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        vault.alignTokens{ value: msg.value }(_amount);
+    }
+    // Align the tokens in a specific vault for a given collection
+    function alignTokens(
+        address _erc721,
+        uint256 _vaultId,
+        uint256 _amount
+    ) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        vault.alignTokens{ value: msg.value }(_amount);
+    }
+
+    // Align as many NFTs that can be afforded and then all remaining tokens in the default vault for a given collection
+    function alignMaxLiquidity(address _erc721) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        vault.alignMaxLiquidity{ value: msg.value }();
+    }
+    // Align as many NFTs that can be afforded and then all remaining tokens in a specific vault for a given collection
+    function alignMaxLiquidity(address _erc721, uint256 _vaultId) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        vault.alignMaxLiquidity{ value: msg.value }();
+    }
+
+    // Claim the yield in the default vault for a given collection
+    function claimYield(address _erc721) external payable {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        vault.claimYield{ value: msg.value }(address(this));
+    }
+    // Claim the yield in a specific vault for a given collection
+    function claimYield(address _erc721, uint256 _vaultId) external payable {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        vault.claimYield{ value: msg.value }(address(this));
+    }
+
+    // Rescue unrelated tokens from a collection's default vault
+    function rescueERC20(
+        address _erc721,
+        address _token,
+        address _to
+    ) external payable onlyOwner returns (uint256) {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        return vault.rescueERC20{ value: msg.value }(_token, _to);
+    }
+    // Rescue unrelated tokens from a specific collection vault
+    function rescueERC20(
+        address _erc721,
+        uint256 _vaultId,
+        address _token,
+        address _to
+    ) external payable onlyOwner returns (uint256) {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        return vault.rescueERC20{ value: msg.value }(_token, _to);
+    }
+
+    // Rescue unrelated NFTs from a collection's default vault
+    function rescueERC721(
+        address _erc721,
+        address _token,
+        uint256 _tokenId,
+        address _to
+    ) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
+        vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
+    }
+    // Rescue unrelated NFTs from a specific collection vault
+    function rescueERC721(
+        address _erc721,
+        uint256 _vaultId,
+        address _token,
+        uint256 _tokenId,
+        address _to
+    ) external payable onlyOwner {
+        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
+        vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
+    }
 }

@@ -79,5 +79,24 @@ contract ERC721Miya is ERC721M {
     function claimYield(address _to) external payable override {
         IAlignmentVault(vault).claimYield{ value: msg.value }(_to);
     }
-    // TODO: Test if rescue functions need to be overridden
+    
+    // Overrides to eliminate rescue calls to the vault but still handle assets held here appropriately
+    function rescueERC20(address _asset, address _to) external override onlyOwner {
+        uint256 balance = IERC20(_asset).balanceOf(address(this));
+        if (_asset == weth) {
+            if (balance > 0) IERC20(_asset).transfer(vault, balance);
+        } else {
+            if (balance > 0) IERC20(_asset).transfer(_to, balance);
+        }
+    }
+    function rescueERC721(address _asset, address _to, uint256 _tokenId) external override onlyOwner {
+        if (_asset == alignedNft && IERC721(_asset).ownerOf(_tokenId) == address(this)) {
+            IERC721(_asset).safeTransferFrom(address(this), vault, _tokenId);
+            return;
+        }
+        if (IERC721(_asset).ownerOf(_tokenId) == address(this)) {
+            IERC721(_asset).transferFrom(address(this), _to, _tokenId);
+            return;
+        }
+    }
 }
