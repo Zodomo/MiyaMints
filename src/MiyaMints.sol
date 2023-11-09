@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import "./MiyaAVFactory.sol";
 import "../lib/AlignmentVault/src/IAlignmentVault.sol";
+import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 
 interface IERC721MiyaInitialize {
     function initialize(
@@ -23,6 +25,7 @@ interface IERC721MiyaInitialize {
 
 contract MiyaMints is Ownable {
     error Invalid();
+    error TransferFailed();
 
     event Implementation(address indexed implementation);
     event Deployed(address indexed deployer, address indexed collection, address indexed aligned, bytes32 salt);
@@ -234,5 +237,52 @@ contract MiyaMints is Ownable {
     ) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
         vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
+    }
+
+    // Withdraw token of any kind, primarily needed for yield
+    function withdrawTokens(
+        address _erc20,
+        uint256 _amount,
+        address _to
+    ) external onlyOwner {
+        bool success = IERC20(_erc20).transferFrom(address(this), _to, _amount);
+        if (!success) revert TransferFailed();
+    }
+    // Batch withdraw tokens of any kind, primarily needed for yield
+    function withdrawTokens(
+        address[] memory _erc20,
+        uint256[] memory _amount,
+        address _to
+    ) external onlyOwner {
+        if (_erc20.length != _amount.length) revert Invalid();
+        for (uint256 i; i < _erc20.length;) {
+            bool success = IERC20(_erc20[i]).transferFrom(address(this), _to, _amount[i]);
+            if (!success) revert TransferFailed();
+            unchecked { ++i; }
+        }
+    }
+
+    // Withdraw NFTs of any kind
+    function withdrawNfts(
+        address _erc721,
+        uint256 _tokenId,
+        address _to
+    ) external onlyOwner {
+        IERC721(_erc721).transferFrom(address(this), _to, _tokenId);
+    }
+    // Batch withdraw NFTs of any kind
+    function withdrawNfts(
+        address[] memory _erc721,
+        uint256[][] memory _tokenIds,
+        address _to
+    ) external onlyOwner {
+        if (_erc721.length != _tokenIds.length) revert Invalid();
+        for (uint256 i; i < _erc721.length;) {
+            for (uint256 j; j < _tokenIds[i].length;) {
+                IERC721(_erc721[i]).transferFrom(address(this), _to, _tokenIds[i][j]);
+                unchecked { ++j; }
+            }
+            unchecked { ++i; }
+        }
     }
 }
