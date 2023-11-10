@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "./MiyaAVFactory.sol";
-import "../lib/AlignmentVault/src/IAlignmentVault.sol";
-import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol";
+import "../../lib/AlignmentVault/src/IAlignmentVault.sol";
+import "../../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
+import "../../lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 
 interface IERC721MiyaInitialize {
     function initialize(
