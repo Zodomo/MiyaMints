@@ -42,6 +42,6 @@ contract MiyaMintsTest is Test {
         IERC721Miya erc721M = IERC721Miya(deployment);
         erc721M.openMint();
         erc721M.mint{ value: 0.01 ether }();
-        miyaMints.alignMaxLiquidity(0x5Af0D9827E0c53E4799BB226655A1de152A425a5);
+        miyaMints.alignMaxLiquidity(0x5Af0D9827E0c53E4799BB226655A1de152A425a5, 392);
     }
 }

@@ -27,13 +27,16 @@ contract MiyaMints is Ownable {
     error Invalid();
     error TransferFailed();
 
-    event Implementation(address indexed implementation);
+    event ERC721MiyaImplementation(address indexed implementation);
+    event MiyaAVImplementation(address indexed implementation);
+    event MiyaIdSet(address indexed erc721, uint256 indexed vaultId);
     event Deployed(address indexed deployer, address indexed collection, address indexed aligned, bytes32 salt);
-    event OwnershipChanged(address indexed _erc721m, address indexed _oldOwner, address indexed _newOwner);
+    event OwnershipChanged(address indexed erc721m, address indexed oldOwner, address indexed newOwner);
 
     address public erc721MiyaImplementation;
     MiyaAVFactory public miyaAVFactory;
-    mapping(address => bool) private _isMiyaMintsContract;
+    mapping(address _erc721 => uint256 _vaultId) public miyaIds;
+    mapping(address _erc721Miya => bool _isMiyaMints) private isMiyaMintsContract;
 
     constructor(
         address _owner,
@@ -42,25 +45,41 @@ contract MiyaMints is Ownable {
     ) payable {
         _initializeOwner(_owner);
         erc721MiyaImplementation = _erc721MiyaImplementation;
-        emit Implementation(_erc721MiyaImplementation);
+        emit ERC721MiyaImplementation(_erc721MiyaImplementation);
         miyaAVFactory = new MiyaAVFactory(address(this), _miyaAVImplementation);
     }
 
-    // Update implementation address for new clones
+    // Set preferred NFTX vault ID for a specific NFT to be used when vaultId 0 is specified for lazy deployments
+    function setMiyaId(address _erc721, uint256 _vaultId) external onlyOwner {
+        miyaIds[_erc721] = _vaultId;
+        emit MiyaIdSet(_erc721, _vaultId);
+    }
+
+    // Update implementation address for new ERC721Miya clones
     // NOTE: Does not update implementation of prior clones
-    function updateImplementation(address _erc721MiyaImplementation) external onlyOwner {
-        if (_erc721MiyaImplementation == erc721MiyaImplementation) revert();
+    function updateERC721MiyaImplementation(address _erc721MiyaImplementation) external onlyOwner {
+        if (_erc721MiyaImplementation == erc721MiyaImplementation) revert Invalid();
         erc721MiyaImplementation = _erc721MiyaImplementation;
-        emit Implementation(_erc721MiyaImplementation);
+        emit ERC721MiyaImplementation(_erc721MiyaImplementation);
+    }
+
+    // Update implementation address for new MiyaAV clones
+    // NOTE: Does not update implementation of prior clones
+    function updateMiyaAVImplementation(address _miyaAVImplementation) external onlyOwner {
+        if (_miyaAVImplementation == miyaAVFactory.implementation()) revert Invalid();
+        miyaAVFactory.updateImplementation(_miyaAVImplementation);
+        emit MiyaAVImplementation(_miyaAVImplementation);
     }
 
     // Helper functions to get vault info from MiyaAVFactory in MiyaMints
     function getVault(address _erc721, uint256 _vaultId) external view returns (address) {
         return miyaAVFactory.vaults(_erc721, _vaultId);
     }
-    function getDefaultVault(address _erc721) external view returns (address) {
-        return miyaAVFactory.defaultVault(_erc721);
+
+    function getAlignedNfts() external view returns (address[] memory) {
+        return miyaAVFactory.getAlignedNfts();
     }
+
     function getVaultIds(address _erc721) external view returns (uint256[] memory) {
         return miyaAVFactory.getVaultIds(_erc721);
     }
@@ -80,7 +99,7 @@ contract MiyaMints is Ownable {
         uint256 _vaultId // NFTX vault ID
     ) external returns (address deployment) {
         deployment = LibClone.clone(erc721MiyaImplementation);
-        _isMiyaMintsContract[deployment] = true;
+        isMiyaMintsContract[deployment] = true;
         IERC721MiyaInitialize(deployment).initialize(
             _name,
             _symbol,
@@ -114,7 +133,7 @@ contract MiyaMints is Ownable {
         bytes32 _salt // Used to deterministically deploy to an address of choice
     ) external returns (address deployment) {
         deployment = LibClone.cloneDeterministic(erc721MiyaImplementation, _salt);
-        _isMiyaMintsContract[deployment] = true;
+        isMiyaMintsContract[deployment] = true;
         IERC721MiyaInitialize(deployment).initialize(
             _name,
             _symbol,
@@ -144,23 +163,17 @@ contract MiyaMints is Ownable {
 
     // Deploy vault if required, else return the already deployed vault
     function deployVault(address _erc721, uint256 _vaultId) external returns (address vault) {
-        vault = miyaAVFactory.vaults(_erc721, _vaultId);
-        if (vault == address(0)) {
-            vault = miyaAVFactory.deploy(_erc721, _vaultId);
-        }
+        // If no vaultId is specified, overwrite with preferred, if any exists
+        if (_vaultId == 0) _vaultId = miyaIds[_erc721];
+        vault = miyaAVFactory.deploy(_erc721, _vaultId);
     }
 
     // Allows deployed collections to update ownership status subgraph for frontend using events
     function ownershipChanged(address _oldOwner, address _newOwner) external {
-        if (!_isMiyaMintsContract[msg.sender]) revert Invalid();
+        if (!isMiyaMintsContract[msg.sender]) revert Invalid();
         emit OwnershipChanged(msg.sender, _oldOwner, _newOwner);
     }
 
-    // Align the NFTs in the default (initial) vault for a given collection
-    function alignNfts(address _erc721, uint256[] memory _tokenIds) external payable onlyOwner {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignNfts{ value: msg.value }(_tokenIds);
-    }
     // Align the NFTs in a specific vault for a given collection
     function alignNfts(
         address _erc721,
@@ -171,11 +184,6 @@ contract MiyaMints is Ownable {
         vault.alignNfts{ value: msg.value }(_tokenIds);
     }
 
-    // Align the tokens in the default (initial) vault for a given collection
-    function alignTokens(address _erc721, uint256 _amount) external payable onlyOwner {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignTokens{ value: msg.value }(_amount);
-    }
     // Align the tokens in a specific vault for a given collection
     function alignTokens(
         address _erc721,
@@ -186,37 +194,18 @@ contract MiyaMints is Ownable {
         vault.alignTokens{ value: msg.value }(_amount);
     }
 
-    // Align as many NFTs that can be afforded and then all remaining tokens in the default vault for a given collection
-    function alignMaxLiquidity(address _erc721) external payable onlyOwner {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignMaxLiquidity{ value: msg.value }();
-    }
     // Align as many NFTs that can be afforded and then all remaining tokens in a specific vault for a given collection
     function alignMaxLiquidity(address _erc721, uint256 _vaultId) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
         vault.alignMaxLiquidity{ value: msg.value }();
     }
 
-    // Claim the yield in the default vault for a given collection
-    function claimYield(address _erc721) external payable {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.claimYield{ value: msg.value }(address(this));
-    }
     // Claim the yield in a specific vault for a given collection
     function claimYield(address _erc721, uint256 _vaultId) external payable {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
         vault.claimYield{ value: msg.value }(address(this));
     }
 
-    // Rescue unrelated tokens from a collection's default vault
-    function rescueERC20(
-        address _erc721,
-        address _token,
-        address _to
-    ) external payable onlyOwner returns (uint256) {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        return vault.rescueERC20{ value: msg.value }(_token, _to);
-    }
     // Rescue unrelated tokens from a specific collection vault
     function rescueERC20(
         address _erc721,
@@ -228,16 +217,6 @@ contract MiyaMints is Ownable {
         return vault.rescueERC20{ value: msg.value }(_token, _to);
     }
 
-    // Rescue unrelated NFTs from a collection's default vault
-    function rescueERC721(
-        address _erc721,
-        address _token,
-        uint256 _tokenId,
-        address _to
-    ) external payable onlyOwner {
-        IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
-    }
     // Rescue unrelated NFTs from a specific collection vault
     function rescueERC721(
         address _erc721,
