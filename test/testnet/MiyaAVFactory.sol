@@ -10,6 +10,7 @@ interface IMiyaAV {
 
 contract MiyaAVFactory is AlignmentVaultFactory {
     using EnumerableSet for EnumerableSet.UintSet;
+
     event Deployed(address indexed vault, address indexed erc721, uint256 indexed vaultId, bytes32 salt);
 
     // ERC721 address => NFTX VaultID => MiyaAV address
@@ -17,7 +18,7 @@ contract MiyaAVFactory is AlignmentVaultFactory {
     mapping(address => EnumerableSet.UintSet) internal _vaultIds;
     mapping(address => address) public defaultVault;
 
-    constructor(address _owner, address _implementation) AlignmentVaultFactory(_owner, _implementation) { }
+    constructor(address _owner, address _implementation) AlignmentVaultFactory(_owner, _implementation) {}
 
     /**
      * @notice Deploys a new AlignmentVault and fully initializes it.
@@ -43,11 +44,11 @@ contract MiyaAVFactory is AlignmentVaultFactory {
      * @param _salt A unique salt to determine the address.
      * @return deployment Address of the newly deployed AlignmentVault.
      */
-    function deployDeterministic(
-        address _erc721,
-        uint256 _vaultId,
-        bytes32 _salt
-    ) external override returns (address deployment) {
+    function deployDeterministic(address _erc721, uint256 _vaultId, bytes32 _salt)
+        external
+        override
+        returns (address deployment)
+    {
         deployment = LibClone.cloneDeterministic(implementation, _salt);
         IAVInitialize(deployment).initialize(_erc721, owner(), _vaultId);
         IAVInitialize(deployment).disableInitializers();

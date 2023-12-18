@@ -35,13 +35,13 @@ contract MiyaMintsTest is Test {
             0x5Af0D9827E0c53E4799BB226655A1de152A425a5,
             0.01 ether,
             392,
-            bytes32(hex'77777777777777')
+            bytes32(hex"77777777777777")
         );
-        address predicted = miyaMints.predictDeterministicAddress(hex'77777777777777');
+        address predicted = miyaMints.predictDeterministicAddress(hex"77777777777777");
         require(deployment == predicted, "deterministic address error");
         IERC721Miya erc721M = IERC721Miya(deployment);
         erc721M.openMint();
-        erc721M.mint{ value: 0.01 ether }();
+        erc721M.mint{value: 0.01 ether}();
         miyaMints.alignMaxLiquidity(0x5Af0D9827E0c53E4799BB226655A1de152A425a5, 392);
     }
 }

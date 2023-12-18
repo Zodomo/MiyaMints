@@ -51,7 +51,7 @@ contract ERC721Miya is ERC721M {
         vault = alignmentVault;
         // Send initialize payment (if any) to vault
         if (msg.value > 0) {
-            (bool success,) = payable(alignmentVault).call{ value: msg.value }("");
+            (bool success,) = payable(alignmentVault).call{value: msg.value}("");
             if (!success) revert TransferFailed();
         }
     }
@@ -61,6 +61,7 @@ contract ERC721Miya is ERC721M {
         IMiyaMints(miyaMints).ownershipChanged(owner(), _newOwner);
         super.transferOwnership(_newOwner);
     }
+
     function renounceOwnership() public payable override onlyOwner {
         IMiyaMints(miyaMints).ownershipChanged(owner(), address(0));
         super.renounceOwnership();
@@ -68,18 +69,21 @@ contract ERC721Miya is ERC721M {
 
     // Overrides to eliminate vault asset controls, vaults will only be operated by MiyaMaker
     function alignNfts(uint256[] memory _tokenIds) external payable override {
-        payable(vault).call{ value:msg.value }("");
+        payable(vault).call{value: msg.value}("");
     }
+
     function alignTokens(uint256 _amount) external payable override {
-        payable(vault).call{ value:msg.value }("");
+        payable(vault).call{value: msg.value}("");
     }
+
     function alignMaxLiquidity() external payable override {
-        payable(vault).call{ value:msg.value }("");
+        payable(vault).call{value: msg.value}("");
     }
+
     function claimYield(address _to) external payable override {
-        IAlignmentVault(vault).claimYield{ value: msg.value }(_to);
+        IAlignmentVault(vault).claimYield{value: msg.value}(_to);
     }
-    
+
     // Overrides to eliminate rescue calls to the vault but still handle assets held here appropriately
     function rescueERC20(address _asset, address _to) external override onlyOwner {
         uint256 balance = IERC20(_asset).balanceOf(address(this));
@@ -89,12 +93,12 @@ contract ERC721Miya is ERC721M {
             if (balance > 0) IERC20(_asset).transfer(_to, balance);
         }
     }
+
     function rescueERC721(address _asset, address _to, uint256 _tokenId) external override onlyOwner {
-        if (_asset == alignedNft && IERC721(_asset).ownerOf(_tokenId) == address(this)) {
+        if (_asset == alignedNft) {
             IERC721(_asset).safeTransferFrom(address(this), vault, _tokenId);
             return;
-        }
-        if (IERC721(_asset).ownerOf(_tokenId) == address(this)) {
+        } else {
             IERC721(_asset).transferFrom(address(this), _to, _tokenId);
             return;
         }

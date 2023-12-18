@@ -35,11 +35,7 @@ contract MiyaMints is Ownable {
     MiyaAVFactory public miyaAVFactory;
     mapping(address => bool) private _isMiyaMintsContract;
 
-    constructor(
-        address _owner,
-        address _erc721MiyaImplementation,
-        address _miyaAVImplementation
-    ) payable {
+    constructor(address _owner, address _erc721MiyaImplementation, address _miyaAVImplementation) payable {
         _initializeOwner(_owner);
         erc721MiyaImplementation = _erc721MiyaImplementation;
         emit Implementation(_erc721MiyaImplementation);
@@ -58,9 +54,11 @@ contract MiyaMints is Ownable {
     function getVault(address _erc721, uint256 _vaultId) external view returns (address) {
         return miyaAVFactory.vaults(_erc721, _vaultId);
     }
+
     function getDefaultVault(address _erc721) external view returns (address) {
         return miyaAVFactory.defaultVault(_erc721);
     }
+
     function getVaultIds(address _erc721) external view returns (uint256[] memory) {
         return miyaAVFactory.getVaultIds(_erc721);
     }
@@ -159,141 +157,120 @@ contract MiyaMints is Ownable {
     // Align the NFTs in the default (initial) vault for a given collection
     function alignNfts(address _erc721, uint256[] memory _tokenIds) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignNfts{ value: msg.value }(_tokenIds);
+        vault.alignNfts{value: msg.value}(_tokenIds);
     }
     // Align the NFTs in a specific vault for a given collection
-    function alignNfts(
-        address _erc721,
-        uint256 _vaultId,
-        uint256[] memory _tokenIds
-    ) external payable onlyOwner {
+
+    function alignNfts(address _erc721, uint256 _vaultId, uint256[] memory _tokenIds) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        vault.alignNfts{ value: msg.value }(_tokenIds);
+        vault.alignNfts{value: msg.value}(_tokenIds);
     }
 
     // Align the tokens in the default (initial) vault for a given collection
     function alignTokens(address _erc721, uint256 _amount) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignTokens{ value: msg.value }(_amount);
+        vault.alignTokens{value: msg.value}(_amount);
     }
     // Align the tokens in a specific vault for a given collection
-    function alignTokens(
-        address _erc721,
-        uint256 _vaultId,
-        uint256 _amount
-    ) external payable onlyOwner {
+
+    function alignTokens(address _erc721, uint256 _vaultId, uint256 _amount) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        vault.alignTokens{ value: msg.value }(_amount);
+        vault.alignTokens{value: msg.value}(_amount);
     }
 
     // Align as many NFTs that can be afforded and then all remaining tokens in the default vault for a given collection
     function alignMaxLiquidity(address _erc721) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.alignMaxLiquidity{ value: msg.value }();
+        vault.alignMaxLiquidity{value: msg.value}();
     }
     // Align as many NFTs that can be afforded and then all remaining tokens in a specific vault for a given collection
+
     function alignMaxLiquidity(address _erc721, uint256 _vaultId) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        vault.alignMaxLiquidity{ value: msg.value }();
+        vault.alignMaxLiquidity{value: msg.value}();
     }
 
     // Claim the yield in the default vault for a given collection
     function claimYield(address _erc721) external payable {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.claimYield{ value: msg.value }(address(this));
+        vault.claimYield{value: msg.value}(address(this));
     }
     // Claim the yield in a specific vault for a given collection
+
     function claimYield(address _erc721, uint256 _vaultId) external payable {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        vault.claimYield{ value: msg.value }(address(this));
+        vault.claimYield{value: msg.value}(address(this));
     }
 
     // Rescue unrelated tokens from a collection's default vault
-    function rescueERC20(
-        address _erc721,
-        address _token,
-        address _to
-    ) external payable onlyOwner returns (uint256) {
+    function rescueERC20(address _erc721, address _token, address _to) external payable onlyOwner returns (uint256) {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        return vault.rescueERC20{ value: msg.value }(_token, _to);
+        return vault.rescueERC20{value: msg.value}(_token, _to);
     }
     // Rescue unrelated tokens from a specific collection vault
-    function rescueERC20(
-        address _erc721,
-        uint256 _vaultId,
-        address _token,
-        address _to
-    ) external payable onlyOwner returns (uint256) {
+
+    function rescueERC20(address _erc721, uint256 _vaultId, address _token, address _to)
+        external
+        payable
+        onlyOwner
+        returns (uint256)
+    {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        return vault.rescueERC20{ value: msg.value }(_token, _to);
+        return vault.rescueERC20{value: msg.value}(_token, _to);
     }
 
     // Rescue unrelated NFTs from a collection's default vault
-    function rescueERC721(
-        address _erc721,
-        address _token,
-        uint256 _tokenId,
-        address _to
-    ) external payable onlyOwner {
+    function rescueERC721(address _erc721, address _token, uint256 _tokenId, address _to) external payable onlyOwner {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.defaultVault(_erc721));
-        vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
+        vault.rescueERC721{value: msg.value}(_token, _to, _tokenId);
     }
     // Rescue unrelated NFTs from a specific collection vault
-    function rescueERC721(
-        address _erc721,
-        uint256 _vaultId,
-        address _token,
-        uint256 _tokenId,
-        address _to
-    ) external payable onlyOwner {
+
+    function rescueERC721(address _erc721, uint256 _vaultId, address _token, uint256 _tokenId, address _to)
+        external
+        payable
+        onlyOwner
+    {
         IAlignmentVault vault = IAlignmentVault(miyaAVFactory.vaults(_erc721, _vaultId));
-        vault.rescueERC721{ value: msg.value }(_token, _to, _tokenId);
+        vault.rescueERC721{value: msg.value}(_token, _to, _tokenId);
     }
 
     // Withdraw token of any kind, primarily needed for yield
-    function withdrawTokens(
-        address _erc20,
-        uint256 _amount,
-        address _to
-    ) external onlyOwner {
+    function withdrawTokens(address _erc20, uint256 _amount, address _to) external onlyOwner {
         bool success = IERC20(_erc20).transferFrom(address(this), _to, _amount);
         if (!success) revert TransferFailed();
     }
     // Batch withdraw tokens of any kind, primarily needed for yield
-    function withdrawTokens(
-        address[] memory _erc20,
-        uint256[] memory _amount,
-        address _to
-    ) external onlyOwner {
+
+    function withdrawTokens(address[] memory _erc20, uint256[] memory _amount, address _to) external onlyOwner {
         if (_erc20.length != _amount.length) revert Invalid();
         for (uint256 i; i < _erc20.length;) {
             bool success = IERC20(_erc20[i]).transferFrom(address(this), _to, _amount[i]);
             if (!success) revert TransferFailed();
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
     // Withdraw NFTs of any kind
-    function withdrawNfts(
-        address _erc721,
-        uint256 _tokenId,
-        address _to
-    ) external onlyOwner {
+    function withdrawNfts(address _erc721, uint256 _tokenId, address _to) external onlyOwner {
         IERC721(_erc721).transferFrom(address(this), _to, _tokenId);
     }
     // Batch withdraw NFTs of any kind
-    function withdrawNfts(
-        address[] memory _erc721,
-        uint256[][] memory _tokenIds,
-        address _to
-    ) external onlyOwner {
+
+    function withdrawNfts(address[] memory _erc721, uint256[][] memory _tokenIds, address _to) external onlyOwner {
         if (_erc721.length != _tokenIds.length) revert Invalid();
         for (uint256 i; i < _erc721.length;) {
             for (uint256 j; j < _tokenIds[i].length;) {
                 IERC721(_erc721[i]).transferFrom(address(this), _to, _tokenIds[i][j]);
-                unchecked { ++j; }
+                unchecked {
+                    ++j;
+                }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 }

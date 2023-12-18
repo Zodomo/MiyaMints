@@ -14,11 +14,7 @@ contract TestNFT is ERC721 {
     string private _baseURI;
     uint256 public totalSupply;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        string memory baseURI_
-    ) {
+    constructor(string memory name_, string memory symbol_, string memory baseURI_) {
         _name = name_;
         _symbol = symbol_;
         _baseURI = baseURI_;
@@ -27,12 +23,15 @@ contract TestNFT is ERC721 {
     function name() public view override returns (string memory) {
         return _name;
     }
+
     function symbol() public view override returns (string memory) {
         return _symbol;
     }
+
     function baseURI() public view returns (string memory) {
         return _baseURI;
     }
+
     function tokenURI(uint256 _tokenId) public view override returns (string memory) {
         if (!_exists(_tokenId)) revert Invalid();
         string memory baseURI_ = baseURI();
@@ -42,6 +41,7 @@ contract TestNFT is ERC721 {
     function mint() public {
         _mint(msg.sender, ++totalSupply);
     }
+
     function mint(uint256 _amount) public {
         for (uint256 i; i < _amount;) {
             unchecked {

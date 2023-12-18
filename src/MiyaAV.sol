@@ -14,9 +14,9 @@ contract MiyaAV is AlignmentVault {
     constructor() payable {}
 
     /**
-    * @notice Override claimYield(address) to send 100% of yield to MiyaMints.sol
-    * @param _recipient Unused parameter
-    */
+     * @notice Override claimYield(address) to send 100% of yield to MiyaMints.sol
+     * @param _recipient Unused parameter
+     */
     function claimYield(address _recipient) public payable override {
         // Claim SLP rewards
         _NFTX_LIQUIDITY_STAKING.claimRewards(vaultId);
@@ -28,8 +28,9 @@ contract MiyaAV is AlignmentVault {
         nftxInventory.transfer(owner(), yield);
     }
     /**
-    * @notice claimYield overload that doesn't require a recipient input
-    */
+     * @notice claimYield overload that doesn't require a recipient input
+     */
+
     function claimYield() external payable {
         claimYield(address(this));
     }
