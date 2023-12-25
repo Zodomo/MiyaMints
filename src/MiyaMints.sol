@@ -42,7 +42,7 @@ contract MiyaMints is Ownable {
         _initializeOwner(_owner);
         erc721MiyaImplementation = _erc721MiyaImplementation;
         emit ERC721MiyaImplementation(_erc721MiyaImplementation);
-        miyaAVFactory = new MiyaAVFactory(address(this), _miyaAVImplementation);
+        miyaAVFactory = new MiyaAVFactory(_owner, _miyaAVImplementation);
     }
 
     // Set preferred NFTX vault ID for a specific NFT to be used when vaultId 0 is specified for lazy deployments
